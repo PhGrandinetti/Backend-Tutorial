@@ -3,11 +3,10 @@ const { route } = require('./petsRouter')
 const router = express.Router()
 
 let users = [
-    {id:1, nome:'Caio Patrick', email: 'caiop@gmail.com', contato: '(84) 9xxxx-xxxx', senha:'123456'},
-    {id:2, nome:'Emily Dantas', email: 'emilyd@gmail.com', contato: '(11) 9xxxx-xxxx', senha: 'a1524b'}
-]
-
-let pId = 3
+    { id: 1, login: "ada.lovelace", senha: "123", email: "ada@email.com", nome: "Ada Lovelace" },
+    { id: 2, login: "grace.hopper", senha: "abc", email: "grace@email.com", nome: "Grace Hopper" }
+   ];
+   let proximoId = 3;
 
 router.get('/', (req,res) =>{
     res.status(200).json(users)
@@ -26,11 +25,11 @@ router.get('/:id', (req,res) => {
 
 router.post('/', (req,res) => {
     const novoUser = {
-        id: pId++,
-        nome: req.body.nome,
+        id: proximoId++,
+        login: req.body.login,
+        senha: req.body.senha,
         email: req.body.email,
-        contato: req.body.contato,
-        senha: req.body.senha
+        nome: req.body.nome
     }
 
     users.push(novoUser)
@@ -38,7 +37,7 @@ router.post('/', (req,res) => {
 })
 
 router.put('/:id', (req,res) => {
-    const id = req.params.id
+    const id = parseInt(req.params.id)
     const index = users.findIndex(p => p.id === id)
 
     if(index === -1){
@@ -47,10 +46,10 @@ router.put('/:id', (req,res) => {
 
     const userAtualizado ={
         id: id,
-        nome: req.body.nome,
+        login: req.body.login,
+        senha: req.body.senha,
         email: req.body.email,
-        contato: req.body.contato,
-        senha: req.body.senha
+        nome: req.body.nome
     };
 
     users[index] = userAtualizado
@@ -59,7 +58,7 @@ router.put('/:id', (req,res) => {
 
 router.patch('/:id', (req,res) => {
     const id = parseInt(req.params.id)
-    const index = findIndex(p => p.id === id)
+    const index = users.findIndex(p => p.id === id)
 
     if(index === -1){
         return res.status(404).json({mensagem: 'Usuário não encontrado'})
@@ -67,10 +66,10 @@ router.patch('/:id', (req,res) => {
     const userOriginal = users[index]
     const userAtualizado = {
         id: userOriginal.id,
-        nome: req.body.nome || userOriginal.nome,
-        email: req.body.email || userOriginal.email,
-        contato: req.body.contato || userOriginal.contato,
-        senha: req.body.senha || userOriginal.senha
+        login: req.body.login ||userOriginal.login,
+        senha: req.body.senha ||userOriginal.senha,
+        email: req.body.email ||userOriginal.email,
+        nome: req.body.nome || userOriginal.nome
     }
     
     users[index] = userAtualizado
@@ -79,7 +78,7 @@ router.patch('/:id', (req,res) => {
 
 router.delete('/:id', (req,res) =>{
     const id = parseInt(req.params.id)
-    const index = findIndex(p=>p.id===id)
+    const index = users.findIndex(p => p.id === id)
     
     if(index === -1){
         return res.status(404).json({mensagem: 'Usuário não encontrado!'})
