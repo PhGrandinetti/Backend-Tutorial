@@ -3,8 +3,8 @@ const app = express()
 const PORTA = 3000
 
 const authRouter = require('./routers/authRouters')
-const petsRouter = require('./routers/petsRouter')
-const usersRouter = require('./routers/usersRoute')
+const petsRouter = require('./routers/petsRouters')
+const usersRouter = require('./routers/usersRouters')
 const authMiddleware = require('./middleware/auth.middleware')
 
 app.use(express.json());
@@ -13,7 +13,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use('api/auth', authRouter)
+app.use('/api/auth', authRouter)
 app.use('/api/users', usersRouter)
 app.use('/api/pets', authMiddleware, petsRouter)
 
