@@ -1,28 +1,30 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt')
 
 
 const users = require('./usersRouters').users; 
 
 const JWT_SECRET = 'sua-chave-super-secreta-e-longa-12345';
 
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
     const { login, senha } = req.body;
 
     if (!login || !senha) {
         return res.status(400).json({ mensagem: "Login e senha são obrigatórios." });
     }
 
-    console.log('login')
-    console.log(users)
+
     const user = users.find(u => u.login === login);
-    console.log('senha')
+    
     if (!user) {
         return res.status(401).json({ mensagem: "Credenciais inválidas." });
     }
 
-    if (user.senha !== senha) {
+    const senhaValida = await bcrypt.compare(senha, user.senha);
+
+    if (!senhaValida) {
         return res.status(401).json({ mensagem: "Credenciais inválidas." });
     }
 
