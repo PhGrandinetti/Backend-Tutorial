@@ -1,12 +1,23 @@
-const express = require('express')
-const router = express.Router()
-const bcrypt = require('bcrypt')
+const {Router} = require('express')
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcryptjs')
+
+//importando middleware de verificação de papel
+const {checkRole} = require('../middleware/permission.middleware')
+const authMiddleware = require('../middleware/auth.middleware') // middleware de autorização
+
+const router = Router()
 
 let users = [
-    { id: 1, login: "ada.lovelace", senha: "$2b$10$nEfjrkBIUk4Ck0lvxjiFaOvoZW5QPhqyw90cJA9ETVeBOAhmKwT8G", email: "ada@email.com", nome: "Ada Lovelace" },
-    { id: 2, login: "grace.hopper", senha: "$2b$10$Z1BhcSfhnp9GX8kdiZ9mauPM0A79XjiUIV.ctmeQYKbkxRBXMFD0W", email: "grace@email.com", nome: "Grace Hopper" }
-];
-let proximoId = 3;
+    {   
+        id: 1,
+        nome: "Admin User",
+        email: "admin@example.com",
+        senha: '$2a$10$Y.ds.L9C5pUXB4LKOaFO9elLnPX/8.fl22LgWf/oQ8i.G2hFzHhie', // hash para 'admin123'
+        role: 'admin' // Papel de administrador
+    }
+];                                            
+let proximoId = 2;
 
 router.get('/', (req,res) =>{
     res.status(200).json(users)
@@ -23,29 +34,43 @@ router.get('/:id', (req,res) => {
     res.status(200).json(user)
 })
 
-router.post('/', async (req, res) => { // <-- 2. TRANSFORMAR a função em async
+router.post('/', authMiddleware, checkRole('admin'),  async (req, res) => { 
     try {
-        const { login, senha, email, nome } = req.body;
+        const { nome, email, senha } = req.body;
 
-        // 3. GERAR O HASH DA SENHA
-        const saltRounds = 10; // Fator de custo
-        const senhaHash = await bcrypt.hash(senha, saltRounds);
+        if(!nome || !email || !senha){
+            return res.status(400).json({mensagem: 'Nome, email e senha são obrigatórios.'})
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const senhaHash = await bcrypt.hash(senha, salt);
+
+        const role = req.body.role || 'user'
 
         const novoUsuario = {
         id: proximoId++,
-        login,
-        senha: senhaHash, // <-- 4. SALVAR O HASH, não a senha original
-        email,
-        nome
+        nome,
+        email, 
+        senha: senhaHash,
+        role: role
         };
 
         users.push(novoUsuario);
-        res.status(201).json({ id: novoUsuario.id, login, email, nome });
+        const userResponse = {...novoUsuario}
+        delete userResponse.senha
+
+        res.status(201).json(userResponse);
 
     } catch (error) {
+        console.error(error)
         res.status(500).json({ mensagem: "Erro ao criar usuário." });
     }
 });
+
+//rota de login
+router.post('/login', async (req,res) => {
+    
+})
 
 router.put('/:id', (req,res) => {
     const id = parseInt(req.params.id)
