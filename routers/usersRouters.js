@@ -1,26 +1,13 @@
-const {Router} = require('express')
-const jwt = require('jsonwebtoken')
-const bcrypt = require('bcrypt')
+import { Router } from 'express';
+import jwt from 'jsonwebtoken'
+import bcrypt from 'bcrypt'
+import db from '../config/dataBase'
+import { checkRole } from '../middleware/permission.middleware';
+import authMiddleware from '../middleware/auth.middleware'
 
-
-//importando middleware de verificação de papel
-const {checkRole} = require('../middleware/permission.middleware')
-const authMiddleware = require('../middleware/auth.middleware') // middleware de autorização
 const secret = 'sua-chave-super-secreta-e-longa-12345';
 
 const router = Router()
-
-let users = [
-    {   
-        id: 1,
-        nome: "Admin User",
-        email: "admin@example.com",
-        senha: '$2b$10$E9E6lvmIglzj/8XWLAhAD.D9EJRVSNg3aOoLu3Em/Qtj5aZcSKy1a', // hash para 'admin123'
-        role: 'admin' // Papel de administrador
-    }
-];            
-
-let proximoId = 2;
 
 router.get('/', (req,res) =>{
     res.status(200).json(users)
@@ -42,25 +29,27 @@ router.post('/', authMiddleware, checkRole('admin'),  async (req, res) => {
     try {
         console.log('entrou no post')
         const { nome, email, senha } = req.body;
+        const existingUser = db.data.users.find(u => u.email === email)
 
-        if(!nome || !email || !senha){
-            return res.status(400).json({mensagem: 'Nome, email e senha são obrigatórios.'})
+        if(existingUser){
+            return res.status(409).json({mensagem: 'Este email já em está em uso.'})
         }
 
         const salt = await bcrypt.genSalt(10);
         const senhaHash = await bcrypt.hash(senha, salt);
-
         const role = req.body.role || 'user'
 
         const novoUsuario = {
-        id: proximoId++,
+        id: (db.data.users.length > 0 ? Math.max(...db.data.users.map(u=>u.id)) : 0) + 1,
         nome,
         email, 
         senha: senhaHash,
         role: role
         };
 
-        users.push(novoUsuario);
+        db.data.users.push(novoUsuario);
+        await db.write()
+        
         const userResponse = {...novoUsuario}
         delete userResponse.senha
 
