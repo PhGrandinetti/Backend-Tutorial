@@ -9,14 +9,14 @@ const users = require('./usersRouters').users;
 const JWT_SECRET = 'sua-chave-super-secreta-e-longa-12345';
 
 router.post('/login', async (req, res) => {
-    const { login, senha } = req.body;
+    const { email, senha } = req.body;
 
-    if (!login || !senha) {
-        return res.status(400).json({ mensagem: "Login e senha são obrigatórios." });
+    if (!email || !senha) {
+        return res.status(400).json({ mensagem: "email e senha são obrigatórios." });
     }
 
 
-    const user = users.find(u => u.login === login);
+    const user = users.find(u => u.email === email);
     
     if (!user) {
         return res.status(401).json({ mensagem: "Credenciais inválidas." });
@@ -30,7 +30,7 @@ router.post('/login', async (req, res) => {
 
     const payload = {
         userId: user.id,
-        login: user.login
+        email: user.email
     };
 
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' }); 

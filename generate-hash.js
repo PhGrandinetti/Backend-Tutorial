@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 
 async function hashPassword() {
- const password = 'abc'; // Senha da Ada
+ const password = 'admin123'; // Senha da Ada
  const saltRounds = 10;
  const hashedPassword = await
 

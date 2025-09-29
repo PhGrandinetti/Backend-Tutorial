@@ -1,10 +1,12 @@
 const {Router} = require('express')
 const jwt = require('jsonwebtoken')
-const bcrypt = require('bcryptjs')
+const bcrypt = require('bcrypt')
+
 
 //importando middleware de verificação de papel
 const {checkRole} = require('../middleware/permission.middleware')
 const authMiddleware = require('../middleware/auth.middleware') // middleware de autorização
+const secret = 'sua-chave-super-secreta-e-longa-12345';
 
 const router = Router()
 
@@ -13,10 +15,11 @@ let users = [
         id: 1,
         nome: "Admin User",
         email: "admin@example.com",
-        senha: '$2a$10$Y.ds.L9C5pUXB4LKOaFO9elLnPX/8.fl22LgWf/oQ8i.G2hFzHhie', // hash para 'admin123'
+        senha: '$2b$10$E9E6lvmIglzj/8XWLAhAD.D9EJRVSNg3aOoLu3Em/Qtj5aZcSKy1a', // hash para 'admin123'
         role: 'admin' // Papel de administrador
     }
-];                                            
+];            
+
 let proximoId = 2;
 
 router.get('/', (req,res) =>{
@@ -34,8 +37,10 @@ router.get('/:id', (req,res) => {
     res.status(200).json(user)
 })
 
+//criando usuário
 router.post('/', authMiddleware, checkRole('admin'),  async (req, res) => { 
     try {
+        console.log('entrou no post')
         const { nome, email, senha } = req.body;
 
         if(!nome || !email || !senha){
@@ -69,11 +74,42 @@ router.post('/', authMiddleware, checkRole('admin'),  async (req, res) => {
 
 //rota de login
 router.post('/login', async (req,res) => {
-    
-})
+    try{
+        const {email, senha} = req.body
+        const user = users.find(u => u.email == email) // checagem de email
+        
+        if(!user){
+            return res.status(401).json({mensagem: "Credenciais inválidas."})
+        }
+
+        const senhaMatch = await bcrypt.compare(senha, user.senha) // checagem de senha
+
+        if(!senhaMatch){
+            return res.status(401).json({mensagem: 'Credenciais inválidas.'})
+        }
+
+        //colocando role no JWT
+        const payload = {
+            id: user.id,
+            nome: user.nome,
+            role: user.role
+        };
+
+        const token = jwt.sign (
+            payload,
+            secret,
+            {expiresIn: '1h'}
+        )
+
+        res.status(200).json({mensagem: 'Login bem-sucedido!', token})
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({menssagem: 'Erro ao processar a requisição.'})
+    }
+});
 
 router.put('/:id', (req,res) => {
-    const id = parseInt(req.params.id)
+const id = parseInt(req.params.id)
     const index = users.findIndex(p => p.id === id)
 
     if(index === -1){
@@ -91,7 +127,7 @@ router.put('/:id', (req,res) => {
     users[index] = userAtualizado
     res.status(200).json(userAtualizado)
 })
-
+    
 router.patch('/:id', (req,res) => {
     const id = parseInt(req.params.id)
     const index = users.findIndex(p => p.id === id)

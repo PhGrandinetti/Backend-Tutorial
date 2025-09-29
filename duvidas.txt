@@ -1,0 +1,7 @@
+se importamos o authmiddleware direto na rota de usuarios, ent pq precisa do atuh router? se ja tem um payload e uma tela de login
+na parte de usuarios?
+
+usersRouters - Problema com o jwt_secret, por algum motivo ele não funciona direto ent tive q dar um jeit
+
+novo usuario - ta dando problema na checagem de um novo usuario, pois ele pede pra checar uma role que ainda nao existe ent sempre
+vai cair no if e retorna (sem permissao), ai fica a dúvida, eu deveria mesmo utilizar a checagem de role na criação de um novo user?
